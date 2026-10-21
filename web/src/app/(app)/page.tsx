@@ -2,7 +2,7 @@ import Link from "next/link"
 import { BuildingIcon, CheckCircle2Icon, PiggyBankIcon, PlusIcon } from "lucide-react"
 import { KpiTile } from "@/components/app/kpi-tile"
 import { buttonVariants } from "@/components/ui/button"
-import { dados } from "@/lib/data/fake"
+import { dados } from "@/lib/data"
 import { formatBRL, formatBRLCompact } from "@/lib/money"
 
 // S01 (versão da fatia): KPIs básicos. Gráficos e seções extras entram nos should-haves.

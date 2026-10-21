@@ -216,6 +216,18 @@ Relationships: Escritorio 1-n Usuario; Escritorio 1-n Diagnostico; Usuario 1-n D
 
 See `features.csv`. Must: 13, should: 16, could: 11, skip: 8.
 
+## Achados do HTML da lista (S04) colado pelo usuário em 2026-10-21
+
+Só comportamento e campos. Nada de markup, CSS, JS ou texto do original foi copiado para o clone.
+
+- **S04 lista**: seleção múltipla por checkbox alimenta o "valuation da carteira" só dos marcados; ordenação por razão social, consultor, data e R$; colunas consultor e observação (escondidas quando a sidebar está aberta); paginação; 3 ações por linha (oportunidades, editar, quadro societário).
+- **S20 busca rápida de CNPJ**: responde se o CNPJ já tem diagnósticos (quantos) e se está "blindado"; o detalhe só aparece para admin. Para o clone: aviso de "CNPJ já diagnosticado" antes de criar outro.
+- **S06 confirmação**: painel "Status geral" com sinal por campo (faturamento, CLT, regime) antes de calcular; campos de energia (grupo tarifário A/B, mercado cativo/livre, conta média) já na confirmação; colaboradores do CNPJ e do grupo econômico.
+- **S14 editar**: também edita endereço, CNAEs secundários, natureza jurídica, tipo (CNPJ ou procuração), base de colaboradores para o cálculo e energia; botão "Atualizar dados" rebusca a fonte pública.
+- **S09 assessment**: campos condicionais (só pede o valor quando a resposta é "sim"), "deseja aderir à solução?" em cada etapa e observação opcional por etapa.
+- **S08 resultado**: indicador "fora de perfil" no título; PDF e treinamento por solução.
+- **Problemas observados no original (evitar)**: rótulos trocados (campo `fat_final` exibido como "Faturamento inicial"), dicionário de tooltips com textos errados (EBITDA descrito como "área em hectares"), IDs duplicados entre modais, `innerHTML` com dados sem escape em partes (risco de XSS), cerca de 30 modais carregados de uma vez, fontes de 0,52rem no mobile, `overflow-x: hidden` no `html`, e total da lista diferente do KPI de "redução de custos" para o mesmo diagnóstico.
+
 ## Out of scope (cannot or should not be cloned)
 
 - A base interna de 35 a 40 mil empresas usada para comparar: são dados do PJ360 e do Grupo Studio.

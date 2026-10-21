@@ -12,9 +12,9 @@ import { ORIGENS, REGIMES } from "@/lib/labels"
 import type { Regime } from "@/lib/solucoes/types"
 import { confirmarDiagnosticoAction } from "../../actions"
 
-type Props = { id: string; padrao: EntradaConfirmada | null; regimeSugerido: Regime | null }
+type Props = { id: string; padrao: EntradaConfirmada | null; regimeSugerido: Regime | null; passivoSugerido: string | null }
 
-export function ConfirmarForm({ id, padrao, regimeSugerido }: Props) {
+export function ConfirmarForm({ id, padrao, regimeSugerido, passivoSugerido }: Props) {
   const [estado, action, pending] = useActionState(confirmarDiagnosticoAction.bind(null, id), null)
   const erroEm = (c: string) => (estado?.campo === c ? estado.erro : undefined)
   const v = estado?.valores
@@ -50,8 +50,8 @@ export function ConfirmarForm({ id, padrao, regimeSugerido }: Props) {
           <Campo id="colaboradoresClt" label="Funcionários CLT" erro={erroEm("colaboradoresClt")}>
             <Input id="colaboradoresClt" name="colaboradoresClt" type="number" min={0} step={1} inputMode="numeric" defaultValue={v ? v.colaboradoresClt : (padrao?.colaboradoresClt ?? "")} />
           </Campo>
-          <Campo id="passivo" label="Passivo tributário (dívida com o fisco)" ajuda="Deixe vazio se não houver." erro={erroEm("passivoTributarioCents")}>
-            <MoneyInput id="passivo" name="passivoTributarioCents" defaultCents={cents("passivoTributarioCents", padrao?.passivoTributarioCents)} />
+          <Campo id="passivo" label="Passivo tributário (dívida com o fisco)" ajuda="Preenchido com a dívida ativa da União (PGFN) quando disponível. Ajuste se houver outras dívidas." erro={erroEm("passivoTributarioCents")}>
+            <MoneyInput id="passivo" name="passivoTributarioCents" defaultCents={cents("passivoTributarioCents", padrao?.passivoTributarioCents ?? passivoSugerido ?? undefined)} />
           </Campo>
           {estado && !estado.campo && <p role="alert" className="text-sm text-destructive sm:col-span-2">{estado.erro}</p>}
           <div className="flex justify-end sm:col-span-2">

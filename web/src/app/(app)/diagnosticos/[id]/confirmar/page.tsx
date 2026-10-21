@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { formatCnpj } from "@/lib/cnpj"
-import { dados } from "@/lib/data/fake"
+import { dados } from "@/lib/data"
+import { REGIMES } from "@/lib/labels"
+import { formatBRL } from "@/lib/money"
 import { ConfirmarForm } from "./confirmar-form"
 
 export default async function ConfirmarPage({ params }: PageProps<"/diagnosticos/[id]/confirmar">) {
@@ -31,6 +33,11 @@ export default async function ConfirmarPage({ params }: PageProps<"/diagnosticos
             <Item termo="Natureza jurídica" valor={e?.naturezaJuridica} />
             <Item termo="Endereço" valor={e?.endereco} />
             <Item termo="Simples Nacional" valor={e?.optanteSimples == null ? null : e.optanteSimples ? "Optante" : "Não optante"} />
+            <Item
+              termo="Dívida ativa da União (PGFN)"
+              valor={e?.pgfn ? `${formatBRL(e.pgfn.tributarioCents)}${e.pgfn.referencia ? ` · ref. ${e.pgfn.referencia.replace("_trimestre_0", "/T")}` : ""}` : "base da PGFN não importada"}
+            />
+            <Item termo="Regime declarado à Receita" valor={e?.regime ? `${REGIMES[e.regime]}${e.regimeAno ? ` (${e.regimeAno})` : ""}` : null} />
           </dl>
           {!e && (
             <p role="status" className="mt-4 rounded-md bg-warning-soft px-3 py-2 text-sm text-on-warning-soft">
@@ -40,7 +47,7 @@ export default async function ConfirmarPage({ params }: PageProps<"/diagnosticos
         </CardContent>
       </Card>
 
-      <ConfirmarForm id={d.id} padrao={d.entrada} regimeSugerido={e?.optanteSimples ? "SIMPLES" : null} />
+      <ConfirmarForm id={d.id} padrao={d.entrada} regimeSugerido={e?.regime ?? (e?.optanteSimples ? "SIMPLES" : null)} passivoSugerido={e?.pgfn?.tributarioCents ?? null} />
     </div>
   )
 }

@@ -3,9 +3,10 @@
 import { redirect } from "next/navigation"
 import { buscarCnpj } from "@/lib/brasilapi"
 import { isValidCnpj, normalizeCnpj } from "@/lib/cnpj"
-import { dados } from "@/lib/data/fake"
+import { dados } from "@/lib/data"
 import type { EntradaConfirmada, Origem } from "@/lib/data/types"
 import { ORIGENS, REGIMES } from "@/lib/labels"
+import { consultarPassivo } from "@/lib/pgfn"
 import { avaliarTudo, VERSAO_REGRAS } from "@/lib/solucoes"
 import type { Regime } from "@/lib/solucoes/types"
 
@@ -23,7 +24,8 @@ export async function criarDiagnosticoAction(_: EstadoForm, fd: FormData): Promi
   const cnpj = normalizeCnpj(texto(fd, "cnpj"))
   if (!isValidCnpj(cnpj)) return falha(fd, "CNPJ inválido. Confira os 14 caracteres.", "cnpj")
 
-  const empresa = await buscarCnpj(cnpj)
+  const publica = await buscarCnpj(cnpj)
+  const empresa = publica && { ...publica, pgfn: consultarPassivo(cnpj) }
   const razaoSocial = texto(fd, "razaoSocial") || empresa?.razaoSocial || ""
   if (!razaoSocial) {
     return falha(fd, "Não encontramos esse CNPJ na base pública agora. Informe a razão social para seguir.", "razaoSocial")

@@ -8,6 +8,10 @@ export type EmpresaPublica = {
   naturezaJuridica: string | null
   endereco: string
   optanteSimples: boolean | null
+  // forma de tributação declarada à Receita no ano mais recente publicado (dados abertos de regime tributário)
+  regime: "SIMPLES" | "PRESUMIDO" | "REAL" | null
+  regimeAno: number | null
+  pgfn?: import("./pgfn").PassivoPgfn | null // dívida ativa da União (dados abertos PGFN), anexada na criação
   socios: { nome: string; qualificacao: string | null }[]
 }
 
@@ -23,7 +27,17 @@ type Resposta = {
   municipio?: string
   uf?: string
   opcao_pelo_simples?: boolean | null
+  regime_tributario?: { ano?: number; forma_de_tributacao?: string }[]
   qsa?: { nome_socio?: string; qualificacao_socio?: string }[]
+}
+
+// Simples vale o cadastro atual; senão, a forma de tributação do ano mais recente (Lucro Real / Presumido).
+function regimeDe(d: Resposta): Pick<EmpresaPublica, "regime" | "regimeAno"> {
+  if (d.opcao_pelo_simples) return { regime: "SIMPLES", regimeAno: null }
+  const ultimo = (d.regime_tributario ?? []).toSorted((a, b) => (b.ano ?? 0) - (a.ano ?? 0))[0]
+  const forma = ultimo?.forma_de_tributacao?.toUpperCase() ?? ""
+  const regime = forma.includes("REAL") ? "REAL" : forma.includes("PRESUMIDO") ? "PRESUMIDO" : null
+  return { regime, regimeAno: regime ? (ultimo?.ano ?? null) : null }
 }
 
 // null = não encontrado ou fonte fora do ar; a tela de confirmação abre para digitação manual.
@@ -45,6 +59,7 @@ export async function buscarCnpj(cnpj: string): Promise<EmpresaPublica | null> {
       naturezaJuridica: d.natureza_juridica ?? null,
       endereco: [d.logradouro, d.numero, d.bairro, d.municipio && `${d.municipio}/${d.uf}`].filter(Boolean).join(", "),
       optanteSimples: d.opcao_pelo_simples ?? null,
+      ...regimeDe(d),
       socios: (d.qsa ?? []).map((s) => ({ nome: s.nome_socio ?? "", qualificacao: s.qualificacao_socio ?? null })),
     }
   } catch {

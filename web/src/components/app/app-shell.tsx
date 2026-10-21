@@ -3,7 +3,8 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
-import { BarChart3Icon, FileSearchIcon, HomeIcon, MenuIcon, SearchIcon, SettingsIcon, XIcon } from "lucide-react"
+import { BarChart3Icon, FileSearchIcon, HomeIcon, LogOutIcon, MenuIcon, SearchIcon, SettingsIcon, XIcon } from "lucide-react"
+import { sairAction } from "@/app/(auth)/actions"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -62,6 +63,15 @@ export function AppShell({ escritorio, usuario, children }: { escritorio: string
             })}
           </ul>
         </nav>
+        <form action={sairAction} className="p-3">
+          <button
+            type="submit"
+            className="flex h-10 w-full cursor-pointer items-center gap-3 rounded-md px-3 text-sm font-medium text-on-nav-muted outline-none hover:bg-nav-active hover:text-on-nav focus-visible:ring-3 focus-visible:ring-ring/50"
+          >
+            <LogOutIcon className="size-4" aria-hidden="true" />
+            Sair
+          </button>
+        </form>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">

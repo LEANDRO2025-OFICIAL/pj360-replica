@@ -5,7 +5,7 @@ import { CategoryChip, EstimatePill, OpportunityPill, PriorityPill } from "@/com
 import { buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { formatCnpj } from "@/lib/cnpj"
-import { dados } from "@/lib/data/fake"
+import { dados } from "@/lib/data"
 import type { Oportunidade } from "@/lib/data/types"
 import { formatData, ORIGENS, PILARES, REGIMES } from "@/lib/labels"
 import { formatBRL } from "@/lib/money"

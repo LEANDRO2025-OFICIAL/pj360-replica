@@ -1,7 +1,7 @@
 feature,area,priority,original,clone,notes
-Login com email e senha,auth,must,yes,partial,S02; tela S02 sem autenticação até o /replica-backend
-Recuperar senha,auth,must,yes,no,S02
-Escritório com vários usuários,auth,should,yes,no,seletor do header; para uso interno pode começar com 1 escritório
+Login com email e senha,auth,must,yes,partial,Supabase Auth pronto; falta validar com o projeto real
+Recuperar senha,auth,must,yes,partial,link por e-mail + nova senha; falta validar com o projeto real
+Escritório com vários usuários,auth,should,yes,partial,escritórios e membros com RLS; convite pelo painel do Supabase
 Novo diagnóstico por CNPJ com razão social e observação,diagnóstico,must,yes,yes,"S05; S05 /diagnosticos/novo (página, não modal)"
 Validação de CNPJ (dígitos) antes de consultar,diagnóstico,must,yes,yes,edge de F01; numérico e alfanumérico 2026; lib/cnpj.ts + teste
 Coleta automática de dados cadastrais públicos pelo CNPJ,dados,must,yes,yes,Receita/BrasilAPI ou similar; S06; BrasilAPI com User-Agent próprio; cai para digitação se falhar
@@ -39,6 +39,11 @@ Faixas de risco e quebra por tributo no relatório,relatório,could,yes,no,S21 R
 PDF completo e PDF resumido,relatório,should,yes,no,S12
 PDF individual por solução,relatório,could,yes,no,ícone PDF em cada linha de S08
 Valuation indicativo com aviso legal no relatório,relatório,could,yes,no,S21
+Aviso de CNPJ já diagnosticado antes de criar outro,diagnóstico,should,yes,no,busca rápida S20 do original mostra contagem
+Sinal de qualidade dos dados na confirmação (faturamento CLT regime),diagnóstico,should,yes,no,painel Status geral do S06
+Seleção múltipla na lista para valuation da carteira,carteira,could,yes,no,checkbox por linha no S04
+Ordenação da lista por empresa consultor data e valor,carteira,should,yes,no,S04
+Campos de energia na confirmação (grupo tarifário mercado conta média),diagnóstico,could,yes,no,entrada da regra de energia
 Base interna de 35-40 mil empresas para comparação,dados,skip,yes,skip,dados próprios do PJ360/Grupo Studio
 Blindagem e desblindagem de CNPJ entre consultores,rede,skip,yes,skip,regra da rede de franquias; sem sentido para uso interno
 Contrato Journey e signatários,contratos,skip,yes,skip,depende da operação Studio Operacional

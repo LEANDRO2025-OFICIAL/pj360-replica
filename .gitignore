@@ -4,3 +4,9 @@ replica/screens/
 # Sistema
 .DS_Store
 Thumbs.db
+
+# bases públicas importadas (PGFN): grandes, regeradas por script
+web/data/
+
+# logs locais
+*.log

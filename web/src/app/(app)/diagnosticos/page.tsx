@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { formatCnpj } from "@/lib/cnpj"
-import { dados } from "@/lib/data/fake"
+import { dados } from "@/lib/data"
 import { formatData } from "@/lib/labels"
 import { formatBRL, formatBRLCompact } from "@/lib/money"
 
