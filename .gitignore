@@ -1,0 +1,6 @@
+# Prints do app original (PJ360): só referência local, nunca distribuir (regra do replica).
+replica/screens/
+
+# Sistema
+.DS_Store
+Thumbs.db

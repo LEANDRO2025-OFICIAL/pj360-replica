@@ -1,0 +1,146 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "./tokens.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* papéis sem equivalente no shadcn: bg-surface, bg-tile, text-on-nav-muted, bg-cat-tax ... (texto secundário = text-muted-foreground) */
+@theme inline {
+  --color-surface: var(--tk-surface);
+  --color-primary-hover: var(--tk-accent-hover);
+  --color-surface-muted: var(--tk-surface-muted);
+  --color-nav: var(--tk-nav-bg);
+  --color-on-nav: var(--tk-on-nav);
+  --color-on-nav-muted: var(--tk-on-nav-muted);
+  --color-nav-active: var(--tk-nav-active);
+  --color-tile: var(--tk-tile-bg);
+  --color-on-tile: var(--tk-on-tile);
+  --color-on-tile-muted: var(--tk-on-tile-muted);
+  --color-success: var(--tk-success);
+  --color-success-soft: var(--tk-success-soft);
+  --color-on-success-soft: var(--tk-on-success-soft);
+  --color-warning: var(--tk-warning);
+  --color-warning-soft: var(--tk-warning-soft);
+  --color-on-warning-soft: var(--tk-on-warning-soft);
+  --color-danger-soft: var(--tk-danger-soft);
+  --color-on-danger-soft: var(--tk-on-danger-soft);
+  --color-cat-tax: var(--tk-cat-tax);
+  --color-cat-contabilidade: var(--tk-cat-contabilidade);
+  --color-cat-corporate: var(--tk-cat-corporate);
+  --color-cat-bank: var(--tk-cat-bank);
+  --color-cat-energy: var(--tk-cat-energy);
+  --color-cat-family: var(--tk-cat-family);
+  --color-cat-brokers: var(--tk-cat-brokers);
+  --shadow-card: var(--tk-shadow-card);
+  --ease-out: var(--tk-motion-ease-out);
+  --ease-in-out: var(--tk-motion-ease-in-out);
+  --ease-drawer: var(--tk-motion-ease-drawer);
+  --shadow-pop: var(--tk-shadow-pop);
+  --spacing-sidebar: var(--tk-layout-sidebar);
+  --spacing-header: var(--tk-layout-header);
+}
+
+:root {
+  /* shadcn -> papéis de replica/design/tokens.json (o "accent" da marca é o "primary" do shadcn) */
+  --background: var(--tk-bg);
+  --foreground: var(--tk-text);
+  --card: var(--tk-surface);
+  --card-foreground: var(--tk-text);
+  --popover: var(--tk-surface);
+  --popover-foreground: var(--tk-text);
+  --primary: var(--tk-accent);
+  --primary-foreground: var(--tk-on-accent);
+  --secondary: var(--tk-surface-muted);
+  --secondary-foreground: var(--tk-text);
+  --muted: var(--tk-surface-muted);
+  --muted-foreground: var(--tk-text-muted);
+  --accent: var(--tk-accent-soft);
+  --accent-foreground: var(--tk-on-accent-soft);
+  --destructive: var(--tk-danger);
+  --border: var(--tk-border);
+  --input: var(--tk-border-input);
+  --ring: var(--tk-focus);
+  --chart-1: var(--tk-cat-tax);
+  --chart-2: var(--tk-cat-corporate);
+  --chart-3: var(--tk-cat-bank);
+  --chart-4: var(--tk-cat-energy);
+  --chart-5: var(--tk-cat-family);
+  --radius: var(--tk-radius-lg);
+  --sidebar: var(--tk-nav-bg);
+  --sidebar-foreground: var(--tk-on-nav);
+  --sidebar-primary: var(--tk-accent);
+  --sidebar-primary-foreground: var(--tk-on-accent);
+  --sidebar-accent: var(--tk-nav-active);
+  --sidebar-accent-foreground: var(--tk-on-nav);
+  --sidebar-border: var(--tk-nav-active);
+  --sidebar-ring: var(--tk-focus);
+}
+
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+/* Movimento reduzido: as animações de entrada e saída viram só fade (sem escala nem deslocamento) */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    --tw-enter-scale: 1 !important;
+    --tw-exit-scale: 1 !important;
+    --tw-enter-translate-x: 0 !important;
+    --tw-enter-translate-y: 0 !important;
+    --tw-exit-translate-x: 0 !important;
+    --tw-exit-translate-y: 0 !important;
+  }
+}

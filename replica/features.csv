@@ -1,0 +1,49 @@
+feature,area,priority,original,clone,notes
+Login com email e senha,auth,must,yes,partial,S02; tela S02 sem autenticação até o /replica-backend
+Recuperar senha,auth,must,yes,no,S02
+Escritório com vários usuários,auth,should,yes,no,seletor do header; para uso interno pode começar com 1 escritório
+Novo diagnóstico por CNPJ com razão social e observação,diagnóstico,must,yes,yes,"S05; S05 /diagnosticos/novo (página, não modal)"
+Validação de CNPJ (dígitos) antes de consultar,diagnóstico,must,yes,yes,edge de F01; numérico e alfanumérico 2026; lib/cnpj.ts + teste
+Coleta automática de dados cadastrais públicos pelo CNPJ,dados,must,yes,yes,Receita/BrasilAPI ou similar; S06; BrasilAPI com User-Agent próprio; cai para digitação se falhar
+Tela de confirmação com regime faturamento e CLT editáveis,diagnóstico,must,yes,yes,S06; cobre a falta de dado público; S06; valores preservados após erro
+Motor de regras que gera oportunidades por solução,motor,must,yes,partial,"regras próprias; começar com 5-10 soluções; 3 de 29 soluções (transação, previdenciária, supply tax); premissas a validar"
+Estimativa em R$ e prioridade por oportunidade,motor,must,yes,yes,tabela de S08; S08
+Classificação por tipo de impacto (redução de custos / performance / compliance),motor,must,yes,yes,KPIs de S01/S04; pilar por solução
+Tela de resultados com visão executiva,diagnóstico,must,yes,yes,S08; S08 desktop e mobile (cards)
+Lista de diagnósticos com busca ordenação e paginação,carteira,must,yes,partial,S04; busca sim; sem ordenação nem paginação
+Relatório PDF do diagnóstico para download,relatório,must,yes,partial,S12; S21 HTML + imprimir/salvar PDF do navegador
+Configurar cabeçalho introdução e contato do PDF,relatório,should,yes,no,S11
+Preview do PDF antes de baixar,relatório,should,yes,no,S12
+Análise da empresa escrita por IA com refazer e copiar,ia,should,yes,no,S10; usar números do motor como entrada
+Assessment em etapas para refinar oportunidades,assessment,should,yes,no,S09; 9 áreas - começar pelas que o escritório vende
+Editar dados do diagnóstico depois de criado,diagnóstico,should,yes,partial,S14; 'Ajustar dados' refaz a confirmação; sem editar cadastro
+Atualizar dados públicos de um diagnóstico,diagnóstico,should,yes,no,S08 Atualizar dados
+Filtro por CNPJ nome segmento e observação,carteira,should,yes,no,S15
+Exportar lista para Excel,carteira,should,yes,no,S04
+Quadro societário importado do CNPJ,dados,should,yes,no,S13; dados de sócios são pessoais (LGPD)
+KPIs do painel (consultados / estimativas por tipo e grupo de crédito),painel,should,yes,partial,S01 e S04; S01 e S04 com contagem e potencial; sem gráficos
+Importação em massa por planilha xlsx com validação,carteira,could,yes,no,S16
+Valuation da carteira com honorários e participação,carteira,could,yes,no,S17
+Origem do cliente (prospecção fria / indicação / carteira),diagnóstico,could,yes,yes,S06 e S14; S06
+Chat flutuante com IA,ia,could,yes,no,widget em todas as telas
+Relatório de diagnósticos por mês,relatório,could,yes,no,S19
+Busca rápida de CNPJ no header,navegação,could,yes,no,S20; comportamento não visto
+Pipeline comercial e oportunidades no funil,comercial,could,yes,no,seções Comercial de S01
+Gráficos dos últimos 6 meses,painel,could,yes,no,S01
+Catálogo de soluções agrupado por categoria com SIM/NÃO para todas,motor,must,yes,partial,S08 mostra as 29 inclusive as NÃO; agrupado por grupo; só 3 soluções no catálogo
+Pilar e área por solução no catálogo,motor,should,yes,yes,colunas do S21
+Score de aderência 0-10 por solução,motor,should,yes,no,S21 Apuração Assistida
+Critérios de elegibilidade exibidos no relatório,relatório,should,yes,no,S21 Supply Tax
+Lista de teses por tributo com probabilidade,motor,should,yes,no,S21 Pontos Qualificados; base de teses própria
+Faixas de risco e quebra por tributo no relatório,relatório,could,yes,no,S21 Revisão Previdenciária/Tributária
+PDF completo e PDF resumido,relatório,should,yes,no,S12
+PDF individual por solução,relatório,could,yes,no,ícone PDF em cada linha de S08
+Valuation indicativo com aviso legal no relatório,relatório,could,yes,no,S21
+Base interna de 35-40 mil empresas para comparação,dados,skip,yes,skip,dados próprios do PJ360/Grupo Studio
+Blindagem e desblindagem de CNPJ entre consultores,rede,skip,yes,skip,regra da rede de franquias; sem sentido para uso interno
+Contrato Journey e signatários,contratos,skip,yes,skip,depende da operação Studio Operacional
+Execução técnica dos projetos,operação,skip,yes,skip,serviço do Grupo Studio
+Cota mensal / checkout / compra de créditos,billing,skip,yes,skip,não se aplica a uso interno
+Blog newsletter Morning Call e canal de notícias,conteúdo,skip,yes,skip,marketing do Grupo Studio
+Treinamentos e GS Academy,conteúdo,skip,yes,skip,conteúdo licenciado deles
+Link de treinamento por solução,conteúdo,skip,yes,skip,treinamentos são conteúdo do Grupo Studio
