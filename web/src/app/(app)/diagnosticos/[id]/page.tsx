@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
-import { FileTextIcon, PencilIcon } from "lucide-react"
+import { FileTextIcon, PencilIcon, BotIcon, ZapIcon } from "lucide-react"
 import { CategoryChip, EstimatePill, OpportunityPill, PriorityPill } from "@/components/app/pills"
 import { buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -31,6 +31,12 @@ export default async function ResultadoPage({ params }: PageProps<"/diagnosticos
         <div className="flex gap-2">
           <Link href={`/diagnosticos/${d.id}/confirmar`} className={buttonVariants({ variant: "outline" })}>
             <PencilIcon aria-hidden="true" />Ajustar dados
+          </Link>
+          <Link href={`/diagnosticos/${d.id}/assessment`} className={buttonVariants({ variant: "outline" })}>
+            <ZapIcon aria-hidden="true" />Assessment
+          </Link>
+          <Link href={`/diagnosticos/${d.id}/analise-ia`} className={buttonVariants({ variant: "outline" })}>
+            <BotIcon aria-hidden="true" />IA PJ MIND
           </Link>
           <Link href={`/diagnosticos/${d.id}/relatorio`} className={buttonVariants()}>
             <FileTextIcon aria-hidden="true" />Ver relatório

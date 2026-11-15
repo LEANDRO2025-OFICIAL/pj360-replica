@@ -146,6 +146,7 @@ export const dados: Dados = {
     const { error: e3 } = await sb
       .from("diagnosticos")
       .update({
+        observacao: r.observacao ?? null,
         regime_tributario: r.entrada!.regime,
         origem_cliente: r.entrada!.origem,
         faturamento_medio_cents: r.entrada!.faturamentoMedioCents,

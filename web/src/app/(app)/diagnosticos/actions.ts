@@ -59,6 +59,7 @@ export async function confirmarDiagnosticoAction(id: string, _: EstadoForm, fd: 
     passivoTributarioCents: BigInt(passivo),
   })
   await dados.salvarResultado(id, {
+    observacao: null,
     entrada,
     oportunidades: resultados.map((r) => ({ ...r, estimativaCents: r.estimativaCents?.toString() ?? null })),
     totalCents: totalCents.toString(),

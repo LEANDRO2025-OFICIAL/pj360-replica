@@ -46,6 +46,6 @@ export type Dados = {
   criarDiagnostico(input: Pick<Diagnostico, "cnpj" | "razaoSocial" | "observacao" | "empresa">): Promise<Diagnostico>
   salvarResultado(
     id: string,
-    r: Pick<Diagnostico, "entrada" | "oportunidades" | "totalCents" | "versaoRegras">,
+    r: Pick<Diagnostico, "entrada" | "oportunidades" | "totalCents" | "versaoRegras" | "observacao">,
   ): Promise<Diagnostico>
 }

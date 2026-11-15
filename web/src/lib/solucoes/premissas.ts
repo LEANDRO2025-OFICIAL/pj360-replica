@@ -18,4 +18,20 @@ export const PREMISSAS = {
   supplyTax: {
     faturamentoMinimoCents: 2000000000n, // R$ 20 mi
   },
+  pontosQualificados: {
+    descontoPontosQualificados: 0.2, // fração do passivo recuperável com a tese de exclusão de ICMS da base do PIS/COFINS
+    prioridadeAltaAcimaCents: 100000000n, // R$ 1 milhão
+  },
+  leiDoBem: {
+    aliquotaInovacao: 0.02, // 2% do faturamento como crédito estimado de IRPJ/CSLL sobre inovação
+    prioridadeAltaAcimaCents: 50000000n, // R$ 500 mil
+  },
+  revisaoTributaria: {
+    descontoAdministrativo: 0.015, // 1,5% do faturamento como recuperação de tributos pagos a maior
+    prioridadeAltaAcimaCents: 100000000n, // R$ 1 milhão
+  },
+  apuracaoAssistida: {
+    economiaApuracao: 0.005, // 0,5% de economia na apuração de tributos
+    prioridadeAltaAcimaCents: 50000000n, // R$ 500 mil
+  },
 } as const
