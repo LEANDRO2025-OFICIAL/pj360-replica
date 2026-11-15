@@ -1,4 +1,5 @@
 // Cliente para a API Econodata (https://www.econodata.com.br)
+// Endpoint: POST https://api.econodata.com.br/v4/companies/search
 // Requer chave de API configurada em NEXT_PUBLIC_ECONODATA_API_KEY
 // Sem a chave, o sistema continua usando apenas a BrasilAPI (dados públicos da Receita Federal).
 // Com a chave, enriquece com: faturamento estimado, número de funcionários,
@@ -18,18 +19,15 @@ export type EconodataEmpresa = {
   cnae_principal_descricao: string | null
   cnaes_secundarios: Array<{ codigo: string; descricao: string }>
   endereco: {
-    logradouro: string | null
-    numero: string | null
-    complemento: string | null
-    bairro: string | null
-    municipio: string | null
     uf: string | null
+    municipio: string | null
     cep: string | null
   } | null
   // Campos Premium (requerem chave de API válida)
-  faturamento_estimado: string | null
-  faturamento_verificado: string | null
+  faturamento_estimado: string | null // valor em centavos (string)
+  faturamento_faixa: string | null // "de X ate Y"
   funcionarios: number | null
+  funcionarios_faixa: string | null // "de X ate Y"
   regime_tributario: string | null // SIMPLES | PRESUMIDO | REAL | NAO_SE_ENQUADRA
   telefone: string | null
   email: string | null
@@ -45,7 +43,7 @@ type EconodataConfig = {
 }
 
 const DEFAULT_CONFIG: EconodataConfig = {
-  baseUrl: "https://www.econodata.com.br",
+  baseUrl: "https://api.econodata.com.br",
   timeout: 8000,
 }
 
@@ -77,16 +75,23 @@ export class EconodataClient {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), this.config.timeout ?? 8000)
 
-      // Endpoint da API Econodata para consulta de empresa por CNPJ
-      const url = `${this.config.baseUrl}/api/v1/empresa/${c}`
+      // Endpoint correto da API Econodata v4 (POST)
+      const url = `${this.config.baseUrl}/v4/companies/search`
+
+      const body = JSON.stringify({
+        criterios: { cnpj: c },
+        incluir: ["cadastro", "estrategico", "perfilNegocio", "contatosBasicos", "contatosAvancados"],
+      })
 
       const res = await fetch(url, {
-        method: "GET",
+        method: "POST",
         headers: {
           Authorization: `Bearer ${this.config.apiKey}`,
           Accept: "application/json",
+          "Content-Type": "application/json",
           "User-Agent": "pj360-diagnostico/1.0",
         },
+        body,
         signal: controller.signal,
       })
 
@@ -117,50 +122,89 @@ export class EconodataClient {
   }
 
   private mapearResposta(data: any): EconodataEmpresa {
+    const emp = data.empresa || data
+    const estrategico = emp.estrategico || {}
+    const contatos = emp.contatosBasicos || {}
+    const perfil = emp.perfilNegocio || {}
+    const contatosAv = emp.contatosAvancados || {}
+
+    // Faturamento: usar o valor do estrategico (em centavos)
+    const fatCnpj = estrategico.faturamentoCnpj || {}
+    const faturamentoEstimadoCents = fatCnpj.valor
+      ? String(Math.round(Number(fatCnpj.valor) * 100))
+      : null
+
+    // Funcionários
+    const headcount = estrategico.headcountCnpj || {}
+    const funcionarios = headcount.valor ? Math.round(Number(headcount.valor)) : null
+
+    // Telefone: primeiro telefone disponível
+    const telefones = contatos.telefones || []
+    const telefone = telefones.length > 0 ? telefones[0].numero : null
+
+    // Email: emailReceita ou primeiro email público
+    const email = contatos.emailReceita ||
+      (contatos.emailsPublicos?.length > 0 ? contatos.emailsPublicos[0].email : null) ||
+      null
+
+    // Site: primeiro website
+    const sites = perfil.websites || contatosAv.websites || []
+    const site = sites.length > 0 ? sites[0] : null
+
+    // Socios
+    const socios = (perfil.socios || []).map((s: any) => ({
+      nome: s.nome || "",
+      qualificacao: s.qualificacao || null,
+      documento: s.documento || null,
+    }))
+
+    // Decisores
+    const decisores = (perfil.decisores || []).map((d: any) => ({
+      nome: d.nome || "",
+      cargo: d.cargo || null,
+      email: d.email || null,
+    }))
+
+    // Regime tributário
+    const regime = perfil.regimeTributario || estrategico.regimeTributario || null
+
     return {
-      cnpj: data.cnpj || data.cnpj_formatado || "",
-      razao_social: data.razao_social || data.razaoSocial || "",
-      nome_fantasia: data.nome_fantasia || data.nomeFantasia || null,
-      data_abertura: data.data_abertura || data.dataAbertura || null,
-      natureza_juridica: data.natureza_juridica || data.naturezaJuridica || null,
-      situacao_cadastral: data.situacao_cadastral || data.situacaoCadastral || null,
-      tipo: data.tipo || data.tipoUnidade || null,
-      capital_social: data.capital_social || data.capitalSocial || null,
-      opcao_simples: data.opcao_simples || data.opcaoSimples || null,
-      cnae_principal: data.cnae_principal || data.cnaePrincipal || null,
-      cnae_principal_descricao: data.cnae_principal_descricao || data.cnaePrincipalDescricao || null,
-      cnaes_secundarios: (data.cnaes_secundarios || data.cnaesSecundarios || []).map((c: any) => ({
+      cnpj: emp.cnpj || "",
+      razao_social: emp.razaoSocial || emp.razao_social || "",
+      nome_fantasia: emp.nomeFantasia || emp.nome_fantasia || null,
+      data_abertura: emp.dataAbertura || emp.data_abertura || null,
+      natureza_juridica: emp.naturezaJuridica || emp.natureza_juridica || null,
+      situacao_cadastral: emp.situacao || emp.situacao_cadastral || null,
+      tipo: emp.tipoUnidade || emp.tipo || null,
+      capital_social: emp.capitalSocial ? String(emp.capitalSocial) : null,
+      opcao_simples: emp.opcaoSimples || emp.opcao_simples || null,
+      cnae_principal: emp.cnaePrimario ? String(emp.cnaePrimario) : null,
+      cnae_principal_descricao: null, // não vem direto na resposta resumida
+      cnaes_secundarios: (emp.cnaesSecundarios || []).map((c: any) => ({
         codigo: c.codigo || c.codigoCnae || "",
         descricao: c.descricao || c.descricaoCnae || "",
       })),
-      endereco: data.endereco
+      endereco: emp.uf || emp.cidade || emp.cep
         ? {
-            logradouro: data.endereco.logradouro || null,
-            numero: data.endereco.numero || null,
-            complemento: data.endereco.complemento || null,
-            bairro: data.endereco.bairro || null,
-            municipio: data.endereco.municipio || null,
-            uf: data.endereco.uf || null,
-            cep: data.endereco.cep || null,
+            uf: emp.uf || null,
+            municipio: emp.cidade || null,
+            cep: emp.cep || null,
           }
         : null,
-      faturamento_estimado: data.faturamento_estimado || data.faturamentoEstimado || null,
-      faturamento_verificado: data.faturamento_verificado || data.faturamentoVerificado || null,
-      funcionarios: data.funcionarios || data.qtd_funcionarios || null,
-      regime_tributario: data.regime_tributario || data.regimeTributario || null,
-      telefone: data.telefone || null,
-      email: data.email || null,
-      site: data.site || data.website || null,
-      socios: (data.socios || []).map((s: any) => ({
-        nome: s.nome || s.nomeSocio || "",
-        qualificacao: s.qualificacao || s.qualificacaoSocio || null,
-        documento: s.documento || s.cpfCnpj || null,
-      })),
-      decisores: (data.decisores || []).map((d: any) => ({
-        nome: d.nome || "",
-        cargo: d.cargo || null,
-        email: d.email || null,
-      })),
+      faturamento_estimado: faturamentoEstimadoCents,
+      faturamento_faixa: fatCnpj.de && fatCnpj.ate
+        ? `R$ ${fatCnpj.de.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} a R$ ${fatCnpj.ate.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
+        : null,
+      funcionarios,
+      funcionarios_faixa: headcount.de && headcount.ate
+        ? `${headcount.de} a ${headcount.ate}`
+        : null,
+      regime_tributario: regime,
+      telefone,
+      email,
+      site,
+      socios,
+      decisores,
     }
   }
 }

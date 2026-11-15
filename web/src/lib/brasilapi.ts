@@ -105,18 +105,11 @@ function mesclarEconodata(
   publica: EmpresaPublica,
   econ: EconodataEmpresa,
 ): EmpresaPublica {
-  const parseCents = (v: string | null): string | null => {
-    if (!v) return null
-    const n = String(v).replace(/[^\d,]/g, "").replace(",", ".")
-    const num = Number(n)
-    if (!Number.isFinite(num)) return null
-    return String(Math.round(num * 100))
-  }
-
+  // faturamento_estimado já vem em centavos (string) da API Econodata v4
   return {
     ...publica,
-    faturamentoEstimadoCents: parseCents(econ.faturamento_estimado),
-    faturamentoVerificadoCents: parseCents(econ.faturamento_verificado),
+    faturamentoEstimadoCents: econ.faturamento_estimado ?? null,
+    faturamentoVerificadoCents: null, // não vem na resposta v4 resumida
     funcionarios: econ.funcionarios ?? null,
     regimeTributarioEconodata: econ.regime_tributario
       ? (econ.regime_tributario as EmpresaPublica["regimeTributarioEconodata"])
