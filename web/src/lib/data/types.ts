@@ -11,6 +11,11 @@ export type EntradaConfirmada = {
   faturamentoMedioCents: string
   colaboradoresClt: number
   passivoTributarioCents: string
+  // Enriquecimento Econodata (opcional, sobrescreve os valores digitados quando disponível)
+  faturamentoEconomicoCents?: string | null      // faturamento estimado do Econodata
+  colaboradoresEconomicos?: number | null        // nº de funcionários do Econodata
+  regimeTributarioEconomico?: Regime | null      // regime do Econodata
+  fonteEconomica?: boolean                       // true se os dados vieram do Econodata
 }
 
 export type Oportunidade = {

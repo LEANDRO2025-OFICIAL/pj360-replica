@@ -145,6 +145,11 @@ create table diagnosticos (
   colaboradores_clt int check (colaboradores_clt >= 0),
   colaboradores_base text not null default 'cnpj' check (colaboradores_base in ('cnpj','matriz_filiais')),
   passivo_tributario_cents bigint check (passivo_tributario_cents >= 0),
+  -- enriquecimento Econodata (opcional, requer chave de API)
+  faturamento_economico_cents bigint check (faturamento_economico_cents >= 0),
+  colaboradores_economicos int check (colaboradores_economicos >= 0),
+  regime_tributario_economico text check (regime_tributario_economico in ('SIMPLES','PRESUMIDO','REAL','NAO_SE_ENQUADRA')),
+  fonte_economica boolean not null default false,
   -- resultado
   total_estimado_cents bigint not null default 0,
   versao_regras text,                            -- qual versão do motor gerou as oportunidades

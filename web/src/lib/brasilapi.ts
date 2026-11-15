@@ -1,5 +1,8 @@
 // Dados cadastrais públicos do CNPJ (dados abertos da Receita) via BrasilAPI. Sem chave.
+// Enriquecimento opcional via API Econodata (requer NEXT_PUBLIC_ECONODATA_API_KEY).
 // https://brasilapi.com.br/docs#tag/CNPJ
+import { econodata, type EconodataEmpresa } from "./econodata"
+
 export type EmpresaPublica = {
   razaoSocial: string
   nomeFantasia: string | null
@@ -13,6 +16,17 @@ export type EmpresaPublica = {
   regimeAno: number | null
   pgfn?: import("./pgfn").PassivoPgfn | null // dívida ativa da União (dados abertos PGFN), anexada na criação
   socios: { nome: string; qualificacao: string | null }[]
+  // Enriquecimento Econodata (apenas quando a chave da API está configurada)
+  faturamentoEstimadoCents?: string | null
+  faturamentoVerificadoCents?: string | null
+  funcionarios?: number | null
+  regimeTributarioEconodata?: "SIMPLES" | "PRESUMIDO" | "REAL" | "NAO_SE_ENQUADRA" | null
+  telefone?: string | null
+  email?: string | null
+  site?: string | null
+  sociosEconodata?: Array<{ nome: string; qualificacao: string | null; documento: string | null }>
+  decisores?: Array<{ nome: string; cargo: string | null; email: string | null }>
+  fonteEconodata?: boolean
 }
 
 type Resposta = {
@@ -42,6 +56,26 @@ function regimeDe(d: Resposta): Pick<EmpresaPublica, "regime" | "regimeAno"> {
 
 // null = não encontrado ou fonte fora do ar; a tela de confirmação abre para digitação manual.
 export async function buscarCnpj(cnpj: string): Promise<EmpresaPublica | null> {
+  // 1. Busca na BrasilAPI (dados públicos da Receita, sempre disponível)
+  const publica = await buscarCnpjBrasilApi(cnpj)
+  if (!publica) return null
+
+  // 2. Enriquecimento opcional via Econodata (se a chave estiver configurada)
+  if (econodata.isConfigured) {
+    try {
+      const enriquecido = await econodata.buscarPorCnpj(cnpj)
+      if (enriquecido) {
+        return mesclarEconodata(publica, enriquecido)
+      }
+    } catch {
+      // falha silenciosa: continua com dados da BrasilAPI
+    }
+  }
+
+  return publica
+}
+
+async function buscarCnpjBrasilApi(cnpj: string): Promise<EmpresaPublica | null> {
   try {
     const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpj}`, {
       // sem User-Agent próprio a API responde 403 (bloqueio de bot) para o fetch do Node
@@ -64,5 +98,34 @@ export async function buscarCnpj(cnpj: string): Promise<EmpresaPublica | null> {
     }
   } catch {
     return null
+  }
+}
+
+function mesclarEconodata(
+  publica: EmpresaPublica,
+  econ: EconodataEmpresa,
+): EmpresaPublica {
+  const parseCents = (v: string | null): string | null => {
+    if (!v) return null
+    const n = String(v).replace(/[^\d,]/g, "").replace(",", ".")
+    const num = Number(n)
+    if (!Number.isFinite(num)) return null
+    return String(Math.round(num * 100))
+  }
+
+  return {
+    ...publica,
+    faturamentoEstimadoCents: parseCents(econ.faturamento_estimado),
+    faturamentoVerificadoCents: parseCents(econ.faturamento_verificado),
+    funcionarios: econ.funcionarios ?? null,
+    regimeTributarioEconodata: econ.regime_tributario
+      ? (econ.regime_tributario as EmpresaPublica["regimeTributarioEconodata"])
+      : null,
+    telefone: econ.telefone ?? null,
+    email: econ.email ?? null,
+    site: econ.site ?? null,
+    sociosEconodata: econ.socios.length > 0 ? econ.socios : undefined,
+    decisores: econ.decisores.length > 0 ? econ.decisores : undefined,
+    fonteEconodata: true,
   }
 }

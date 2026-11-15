@@ -7,6 +7,7 @@ import type { Dados, Diagnostico, Oportunidade, Origem, Status } from "./types"
 // bigint chega como texto (::text) para não perder precisão no JSON.
 const CAMPOS = `id, observacao, status, regime_tributario, origem_cliente, colaboradores_clt,
   faturamento_medio_cents::text, passivo_tributario_cents::text, total_estimado_cents::text, versao_regras, created_at,
+  faturamento_economico_cents::text, colaboradores_economicos, regime_tributario_economico, fonte_economica,
   empresas!inner(cnpj, razao_social, dados_publicos)`
 const COMPLETO = `${CAMPOS}, oportunidades(elegivel, prioridade, estimativa_cents::text, detalhe, solucoes(slug, nome, grupo, pilar, area, ordem))`
 
@@ -22,6 +23,10 @@ type Linha = {
   total_estimado_cents: string
   versao_regras: string | null
   created_at: string
+  faturamento_economico_cents: string | null
+  colaboradores_economicos: number | null
+  regime_tributario_economico: Regime | null
+  fonte_economica: boolean
   empresas: { cnpj: string; razao_social: string; dados_publicos: Partial<EmpresaPublica> }
   oportunidades?: {
     elegivel: boolean
@@ -61,6 +66,10 @@ function paraDiagnostico(l: Linha): Diagnostico {
           faturamentoMedioCents: l.faturamento_medio_cents!,
           colaboradoresClt: l.colaboradores_clt ?? 0,
           passivoTributarioCents: l.passivo_tributario_cents ?? "0",
+          faturamentoEconomicoCents: l.faturamento_economico_cents ?? null,
+          colaboradoresEconomicos: l.colaboradores_economicos ?? null,
+          regimeTributarioEconomico: l.regime_tributario_economico ?? null,
+          fonteEconomica: l.fonte_economica,
         }
       : null,
     oportunidades,
@@ -152,6 +161,10 @@ export const dados: Dados = {
         faturamento_medio_cents: r.entrada!.faturamentoMedioCents,
         colaboradores_clt: r.entrada!.colaboradoresClt,
         passivo_tributario_cents: r.entrada!.passivoTributarioCents,
+        faturamento_economico_cents: r.entrada!.faturamentoEconomicoCents ?? null,
+        colaboradores_economicos: r.entrada!.colaboradoresEconomicos ?? null,
+        regime_tributario_economico: r.entrada!.regimeTributarioEconomico ?? null,
+        fonte_economica: r.entrada!.fonteEconomica ?? false,
         total_estimado_cents: r.totalCents,
         versao_regras: r.versaoRegras,
         status: "concluido",

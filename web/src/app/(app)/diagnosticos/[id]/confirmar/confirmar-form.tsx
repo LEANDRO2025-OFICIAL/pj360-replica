@@ -12,20 +12,43 @@ import { ORIGENS, REGIMES } from "@/lib/labels"
 import type { Regime } from "@/lib/solucoes/types"
 import { confirmarDiagnosticoAction } from "../../actions"
 
-type Props = { id: string; padrao: EntradaConfirmada | null; regimeSugerido: Regime | null; passivoSugerido: string | null }
+type Props = {
+  id: string
+  padrao: EntradaConfirmada | null
+  regimeSugerido: Regime | null
+  passivoSugerido: string | null
+  faturamentoSugerido: string | null
+  colaboradoresSugerido: number | null
+}
 
-export function ConfirmarForm({ id, padrao, regimeSugerido, passivoSugerido }: Props) {
+export function ConfirmarForm({ id, padrao, regimeSugerido, passivoSugerido, faturamentoSugerido, colaboradoresSugerido }: Props) {
   const [estado, action, pending] = useActionState(confirmarDiagnosticoAction.bind(null, id), null)
   const erroEm = (c: string) => (estado?.campo === c ? estado.erro : undefined)
   const v = estado?.valores
   const cents = (k: string, p?: string) => { const s = v ? v[k] : p; return s ? BigInt(s) : null }
+
+  // Prioridade: valores digitados > sugestão Econodata > valores salvos (padrao)
+  const faturamentoDefault =
+    v?.faturamentoMedioCents ??
+    faturamentoSugerido ??
+    padrao?.faturamentoEconomicoCents ??
+    padrao?.faturamentoMedioCents ??
+    undefined
+  const colaboradoresDefault =
+    v?.colaboradoresClt != null
+      ? v.colaboradoresClt
+      : colaboradoresSugerido != null
+        ? colaboradoresSugerido
+        : padrao?.colaboradoresEconomicos ??
+          padrao?.colaboradoresClt ??
+          ""
 
   return (
     <Card>
       <CardContent>
         <form key={JSON.stringify(v)} action={action} className="grid gap-5 sm:grid-cols-2" noValidate>
           <Campo id="regime" label="Regime tributário" erro={erroEm("regime")}>
-            <Select items={REGIMES} name="regime" defaultValue={(v ? v.regime : padrao?.regime ?? regimeSugerido) || undefined}>
+            <Select items={REGIMES} name="regime" defaultValue={(v ? v.regime : padrao?.regimeTributarioEconomico ?? regimeSugerido) || undefined}>
               <SelectTrigger id="regime" className="w-full">
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
@@ -45,14 +68,32 @@ export function ConfirmarForm({ id, padrao, regimeSugerido, passivoSugerido }: P
             </Select>
           </Campo>
           <Campo id="faturamento" label="Faturamento médio anual" erro={erroEm("faturamentoMedioCents")}>
-            <MoneyInput id="faturamento" name="faturamentoMedioCents" defaultCents={cents("faturamentoMedioCents", padrao?.faturamentoMedioCents)} />
+            <MoneyInput
+              id="faturamento"
+              name="faturamentoMedioCents"
+              defaultCents={cents("faturamentoMedioCents", faturamentoDefault)}
+            />
           </Campo>
           <Campo id="colaboradoresClt" label="Funcionários CLT" erro={erroEm("colaboradoresClt")}>
-            <Input id="colaboradoresClt" name="colaboradoresClt" type="number" min={0} step={1} inputMode="numeric" defaultValue={v ? v.colaboradoresClt : (padrao?.colaboradoresClt ?? "")} />
+            <Input
+              id="colaboradoresClt"
+              name="colaboradoresClt"
+              type="number"
+              min={0}
+              step={1}
+              inputMode="numeric"
+              defaultValue={colaboradoresDefault}
+            />
           </Campo>
           <Campo id="passivo" label="Passivo tributário (dívida com o fisco)" ajuda="Preenchido com a dívida ativa da União (PGFN) quando disponível. Ajuste se houver outras dívidas." erro={erroEm("passivoTributarioCents")}>
             <MoneyInput id="passivo" name="passivoTributarioCents" defaultCents={cents("passivoTributarioCents", padrao?.passivoTributarioCents ?? passivoSugerido ?? undefined)} />
           </Campo>
+          {/* Campos ocultos do enriquecimento Econodata (enviados na action) */}
+          <input type="hidden" name="faturamentoEconomicoCents" value={padrao?.faturamentoEconomicoCents ?? ""} />
+          <input type="hidden" name="colaboradoresEconomicos" value={padrao?.colaboradoresEconomicos != null ? String(padrao.colaboradoresEconomicos) : ""} />
+          <input type="hidden" name="regimeTributarioEconomico" value={padrao?.regimeTributarioEconomico ?? ""} />
+          <input type="hidden" name="fonteEconomica" value={padrao?.fonteEconomica ? "true" : "false"} />
+
           {estado && !estado.campo && <p role="alert" className="text-sm text-destructive sm:col-span-2">{estado.erro}</p>}
           <div className="flex justify-end sm:col-span-2">
             <Button type="submit" size="lg" loading={pending}>{pending ? "Calculando…" : "Calcular oportunidades"}</Button>

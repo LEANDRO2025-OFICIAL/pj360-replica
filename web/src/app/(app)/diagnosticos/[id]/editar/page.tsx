@@ -12,6 +12,8 @@ export default async function EditarPage({ params }: PageProps<"/diagnosticos/[i
   if (!d) notFound()
   const e = d.empresa
 
+  const temEconomico = Boolean(e?.fonteEconodata || e?.faturamentoEstimadoCents || e?.funcionarios)
+
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <header>
@@ -38,16 +40,35 @@ export default async function EditarPage({ params }: PageProps<"/diagnosticos/[i
               valor={e?.pgfn ? `${formatBRL(e.pgfn.tributarioCents)}${e.pgfn.referencia ? ` · ref. ${e.pgfn.referencia.replace("_trimestre_0", "/T")}` : ""}` : "base da PGFN não importada"}
             />
             <Item termo="Regime declarado à Receita" valor={e?.regime ? `${REGIMES[e.regime]}${e.regimeAno ? ` (${e.regimeAno})` : ""}` : null} />
+            {temEconomico && (
+              <>
+                <Item termo="Faturamento estimado (Econodata)" valor={e?.faturamentoEstimadoCents ? formatBRL(e.faturamentoEstimadoCents) : "—"} />
+                <Item termo="Funcionários (Econodata)" valor={e?.funcionarios != null ? String(e.funcionarios) : "—"} />
+                <Item termo="Regime tributário (Econodata)" valor={e?.regimeTributarioEconodata ? REGIMES[e.regimeTributarioEconodata] : "—"} />
+              </>
+            )}
           </dl>
           {!e && (
             <p role="status" className="mt-4 rounded-md bg-warning-soft px-3 py-2 text-sm text-on-warning-soft">
               A base pública não respondeu para este CNPJ. Você pode seguir com os dados abaixo.
             </p>
           )}
+          {temEconomico && (
+            <p role="status" className="mt-2 rounded-md bg-primary/10 px-3 py-2 text-sm text-primary-foreground">
+              Dados de enriquecimento Econodata detectados: faturamento, funcionários e regime tributário foram sugeridos automaticamente.
+            </p>
+          )}
         </CardContent>
       </Card>
 
-      <ConfirmarForm id={d.id} padrao={d.entrada} regimeSugerido={e?.regime ?? (e?.optanteSimples ? "SIMPLES" : null)} passivoSugerido={e?.pgfn?.tributarioCents ?? null} />
+      <ConfirmarForm
+        id={d.id}
+        padrao={d.entrada}
+        regimeSugerido={e?.regimeTributarioEconodata ?? e?.regime ?? (e?.optanteSimples ? "SIMPLES" : null)}
+        passivoSugerido={e?.pgfn?.tributarioCents ?? null}
+        faturamentoSugerido={e?.faturamentoEstimadoCents ?? null}
+        colaboradoresSugerido={e?.funcionarios ?? null}
+      />
     </div>
   )
 }
