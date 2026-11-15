@@ -1,39 +1,73 @@
 // Cliente para a API Econodata (https://www.econodata.com.br)
 // Endpoint: POST https://api.econodata.com.br/v4/companies/search
+// Documentação: https://econodata-tecnologia.github.io/api-v4-docs
 // Requer chave de API configurada em NEXT_PUBLIC_ECONODATA_API_KEY
 // Sem a chave, o sistema continua usando apenas a BrasilAPI (dados públicos da Receita Federal).
-// Com a chave, enriquece com: faturamento estimado, número de funcionários,
-// regime tributário, emails, telefones, sites, redes sociais, decisores, etc.
+// Com a chave, enriquece com: faturamento, funcionários, regime tributário,
+// telefones, emails, sites, redes sociais, tecnologias, sócios, decisores, dívidas, grupo econômico, etc.
 
 export type EconodataEmpresa = {
+  // Identificação
   cnpj: string
   razao_social: string
   nome_fantasia: string | null
-  data_abertura: string | null
-  natureza_juridica: string | null
   situacao_cadastral: string | null
   tipo: string | null // MATRIZ | FILIAL
+  data_abertura: string | null
   capital_social: string | null
-  opcao_simples: string | null // SIM | NAO
-  cnae_principal: string | null
-  cnae_principal_descricao: string | null
+  natureza_juridica: string | null
+  opcao_simples: string | null // SIM | NAO | NAO_OPTANTE
+  uf: string | null
+  municipio: string | null
+  cidade: string | null
+  cep: string | null
+
+  // CNAE / Atividade
+  cnae_primario: string | null
+  cnae_primario_descricao: string | null
   cnaes_secundarios: Array<{ codigo: string; descricao: string }>
-  endereco: {
-    uf: string | null
-    municipio: string | null
-    cep: string | null
-  } | null
-  // Campos Premium (requerem chave de API válida)
-  faturamento_estimado: string | null // valor em centavos (string)
-  faturamento_faixa: string | null // "de X ate Y"
+  setor: string | null
+  segmento: string | null
+
+  // Porte e Faturamento
   funcionarios: number | null
-  funcionarios_faixa: string | null // "de X ate Y"
+  funcionarios_faixa: string | null
+  faturamento_estimado_cents: string | null // valor em centavos (string)
+  faturamento_faixa: string | null
+  faturamento_matriz_filiais_cents: string | null
+  porte: string | null
+
+  // Regime Tributário
   regime_tributario: string | null // SIMPLES | PRESUMIDO | REAL | NAO_SE_ENQUADRA
-  telefone: string | null
-  email: string | null
+  regime_tributario_descricao: string | null
+
+  // Contatos
+  telefones: Array<{ numero: string; tipo: string; assertividade: string; verificado: boolean; temWhatsapp: boolean }>
+  email_receita: string | null
+  emails_validados: string[]
+  emails_publicos: Array<{ email: string; origem: string; prioridade: number }>
   site: string | null
-  socios: Array<{ nome: string; qualificacao: string | null; documento: string | null }>
-  decisores: Array<{ nome: string; cargo: string | null; email: string | null }>
+  websites: string[]
+  redes_sociais: Array<{ rede: string; url: string }>
+  tem_whatsapp: boolean
+
+  // Pessoas e Organograma
+  socios: Array<{ nome: string; qualificacao: string | null; documento: string | null; papel: string | null }>
+  decisores: Array<{ nome: string; cargo: string | null; email: string | null; nivel_decisao: string | null }>
+  colaboradores: Array<{ nome: string; cargo: string | null; email: string | null }>
+
+  // Sinais e Saúde Financeira
+  dividas: any // objeto com dívidas (PGFN, etc.)
+  tecnologias: Array<{ nome: string; categoria: string }>
+  tecnologias_categorias: string[]
+  nivel_atividade: string | null
+  recebimentos_governo: number | null
+  grupo_economico: any
+  filiais: Array<{ cnpj: string; nome: string; uf: string | null }>
+
+  // Metadados
+  origem_dados: string | null
+  fonte_econodata: boolean
 }
 
 type EconodataConfig = {
@@ -44,11 +78,16 @@ type EconodataConfig = {
 
 const DEFAULT_CONFIG: EconodataConfig = {
   baseUrl: "https://api.econodata.com.br",
-  timeout: 8000,
+  timeout: 10000,
 }
 
 function normalizeCnpj(input: string): string {
   return input.toUpperCase().replace(/[^0-9A-Z]/g, "");
+}
+
+function cents(valor: number | null | undefined): string | null {
+  if (valor === null || valor === undefined) return null
+  return String(Math.round(Number(valor) * 100))
 }
 
 export class EconodataClient {
@@ -67,15 +106,13 @@ export class EconodataClient {
     if (!/^[0-9A-Z]{12}[0-9]{2}$/.test(c)) return null
 
     if (!this.isConfigured) {
-      // Sem chave: retorna null, o sistema continua com BrasilAPI
       return null
     }
 
     try {
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), this.config.timeout ?? 8000)
+      const timeoutId = setTimeout(() => controller.abort(), this.config.timeout)
 
-      // Endpoint correto da API Econodata v4 (POST)
       const url = `${this.config.baseUrl}/v4/companies/search`
 
       const body = JSON.stringify({
@@ -105,6 +142,10 @@ export class EconodataClient {
         if (res.status === 404) {
           return null
         }
+        if (res.status === 429) {
+          console.warn("Econodata: limite de requisições excedido (429)")
+          return null
+        }
         console.warn(`Econodata: erro ${res.status} ao consultar CNPJ ${c}`)
         return null
       }
@@ -128,83 +169,155 @@ export class EconodataClient {
     const perfil = emp.perfilNegocio || {}
     const contatosAv = emp.contatosAvancados || {}
 
-    // Faturamento: usar o valor do estrategico (em centavos)
+    // ---- Faturamento ----
     const fatCnpj = estrategico.faturamentoCnpj || {}
-    const faturamentoEstimadoCents = fatCnpj.valor
-      ? String(Math.round(Number(fatCnpj.valor) * 100))
-      : null
+    const fatMatriz = estrategico.faturamentoMatrizFiliais || {}
+    const faturamentoCents = cents(
+      fatCnpj.valor ?? fatMatriz.valor ?? perfil.faturamento ?? null
+    )
 
-    // Funcionários
-    const headcount = estrategico.headcountCnpj || {}
-    const funcionarios = headcount.valor ? Math.round(Number(headcount.valor)) : null
+    // ---- Funcionários ----
+    const headcount = estrategico.headcountCnpj || estrategico.headcountMatrizFiliais || {}
+    const funcionarios = headcount.valor
+      ? Math.round(Number(headcount.valor))
+      : perfil.funcionarios ?? null
 
-    // Telefone: primeiro telefone disponível
-    const telefones = contatos.telefones || []
-    const telefone = telefones.length > 0 ? telefones[0].numero : null
-
-    // Email: emailReceita ou primeiro email público
-    const email = contatos.emailReceita ||
-      (contatos.emailsPublicos?.length > 0 ? contatos.emailsPublicos[0].email : null) ||
-      null
-
-    // Site: primeiro website
-    const sites = perfil.websites || contatosAv.websites || []
-    const site = sites.length > 0 ? sites[0] : null
-
-    // Socios
-    const socios = (perfil.socios || []).map((s: any) => ({
-      nome: s.nome || "",
-      qualificacao: s.qualificacao || null,
-      documento: s.documento || null,
+    // ---- Telefones ----
+    const telefonesRaw = contatos.telefones || []
+    const telefones = telefonesRaw.map((t: any) => ({
+      numero: t.numero || "",
+      tipo: t.tipo || "",
+      assertividade: t.assertividade || "",
+      verificado: t.verificado === true,
+      temWhatsapp: t.temWhatsapp === true,
     }))
 
-    // Decisores
+    // ---- Emails ----
+    const emailReceita = contatos.emailReceita || null
+    const emailsValidados = contatos.emailsValidadosSetores || contatos.emails_validados || []
+    const emailsPublicos = (contatos.emailsPublicos || []).map((e: any) => ({
+      email: e.email || "",
+      origem: e.origem || "",
+      prioridade: e.prioridade ?? 0,
+    }))
+
+    // ---- Sites / Websites ----
+    const websites = perfil.websites || contatosAv.websites || []
+    const site = websites.length > 0 ? websites[0] : null
+
+    // ---- Redes sociais ----
+    const redesSociaisRaw = contatos.redesSociais || contatosAv.redesSociais || perfil.redesSociais || []
+    const redesSociais = redesSociaisRaw.map((r: any) => ({
+      rede: r.rede || r.plataforma || "",
+      url: r.url || r.link || "",
+    }))
+
+    // ---- CNAEs ----
+    const cnaesSecundarios = (emp.cnaesSecundarios || []).map((c: any) => ({
+      codigo: c.codigo || c.codigoCnae || "",
+      descricao: c.descricao || c.descricaoCnae || "",
+    }))
+
+    // ---- Socios ----
+    const socios = (perfil.socios || []).map((s: any) => ({
+      nome: s.nome || "",
+      qualificacao: s.qualificacao || s.qualificacaoSocio || null,
+      documento: s.documento || s.cpfCnpj || null,
+      papel: s.papel || null,
+    }))
+
+    // ---- Decisores ----
     const decisores = (perfil.decisores || []).map((d: any) => ({
       nome: d.nome || "",
       cargo: d.cargo || null,
       email: d.email || null,
+      nivel_decisao: d.nivelDecisao || d.nivel_decisao || null,
     }))
 
-    // Regime tributário
-    const regime = perfil.regimeTributario || estrategico.regimeTributario || null
+    // ---- Colaboradores ----
+    const colaboradores = (perfil.colaboradores || []).map((c: any) => ({
+      nome: c.nome || "",
+      cargo: c.cargo || null,
+      email: c.email || null,
+    }))
+
+    // ---- Tecnologias ----
+    const tecnologiasRaw = estrategico.tecnologias?.tecnologias || perfil.tecnologias || []
+    const tecnologias = tecnologiasRaw.map((t: any) => ({
+      nome: t.nome || t.tecnologia || "",
+      categoria: t.categoria || "",
+    }))
+    const tecnologiasCategorias = estrategico.tecnologias?.categorias || perfil.tecnologiasCategorias || []
+
+    // ---- Dívidas ----
+    const dividas = estrategico.dividas || perfil.dividas || emp.dividas || null
+
+    // ---- Grupo econômico / Filiais ----
+    const grupoEconomico = emp.grupoEconomico || estrategico.grupoEconomico || null
+    const filiais = (emp.filiais || perfil.filiais || []).map((f: any) => ({
+      cnpj: f.cnpj || "",
+      nome: f.nome || "",
+      uf: f.uf || null,
+    }))
 
     return {
       cnpj: emp.cnpj || "",
-      razao_social: emp.razaoSocial || emp.razao_social || "",
-      nome_fantasia: emp.nomeFantasia || emp.nome_fantasia || null,
-      data_abertura: emp.dataAbertura || emp.data_abertura || null,
-      natureza_juridica: emp.naturezaJuridica || emp.natureza_juridica || null,
-      situacao_cadastral: emp.situacao || emp.situacao_cadastral || null,
-      tipo: emp.tipoUnidade || emp.tipo || null,
+      razao_social: emp.razaoSocial || "",
+      nome_fantasia: emp.nomeFantasia || null,
+      situacao_cadastral: emp.situacao || null,
+      tipo: emp.tipoUnidade || null,
+      data_abertura: emp.dataAbertura || null,
       capital_social: emp.capitalSocial ? String(emp.capitalSocial) : null,
-      opcao_simples: emp.opcaoSimples || emp.opcao_simples || null,
-      cnae_principal: emp.cnaePrimario ? String(emp.cnaePrimario) : null,
-      cnae_principal_descricao: null, // não vem direto na resposta resumida
-      cnaes_secundarios: (emp.cnaesSecundarios || []).map((c: any) => ({
-        codigo: c.codigo || c.codigoCnae || "",
-        descricao: c.descricao || c.descricaoCnae || "",
-      })),
-      endereco: emp.uf || emp.cidade || emp.cep
-        ? {
-            uf: emp.uf || null,
-            municipio: emp.cidade || null,
-            cep: emp.cep || null,
-          }
+      natureza_juridica: emp.naturezaJuridica || null,
+      opcao_simples: emp.opcaoSimples || null,
+      uf: emp.uf || null,
+      municipio: emp.municipio || emp.cidade || null,
+      cidade: emp.cidade || emp.municipio || null,
+      cep: emp.cep || null,
+
+      cnae_primario: emp.cnaePrimario ? String(emp.cnaePrimario) : null,
+      cnae_primario_descricao: perfil.cnaePrimarioDescricao || null,
+      cnaes_secundarios: cnaesSecundarios,
+      setor: perfil.setor || emp.setor || null,
+      segmento: perfil.segmento || emp.segmento || null,
+
+      funcionarios,
+      funcionarios_faixa: estrategico.headcountCnpj?.de && estrategico.headcountCnpj?.ate
+        ? `${estrategico.headcountCnpj.de} a ${estrategico.headcountCnpj.ate}`
         : null,
-      faturamento_estimado: faturamentoEstimadoCents,
+      faturamento_estimado_cents: faturamentoCents,
       faturamento_faixa: fatCnpj.de && fatCnpj.ate
         ? `R$ ${fatCnpj.de.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} a R$ ${fatCnpj.ate.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
         : null,
-      funcionarios,
-      funcionarios_faixa: headcount.de && headcount.ate
-        ? `${headcount.de} a ${headcount.ate}`
-        : null,
-      regime_tributario: regime,
-      telefone,
-      email,
+      faturamento_matriz_filiais_cents: cents(fatMatriz.valor),
+      porte: emp.porte || estrategico.porte || null,
+
+      regime_tributario: perfil.regimeTributario || estrategico.regimeTributario || null,
+      regime_tributario_descricao: perfil.regimeTributarioDescricao || null,
+
+      telefones,
+      email_receita: emailReceita,
+      emails_validados: emailsValidados,
+      emails_publicos: emailsPublicos,
       site,
+      websites,
+      redes_sociais: redesSociais,
+      tem_whatsapp: telefones.some((t: { temWhatsapp: boolean }) => t.temWhatsapp) || contatos.temWhatsapp === true,
+
       socios,
       decisores,
+      colaboradores,
+
+      dividas,
+      tecnologias,
+      tecnologias_categorias: tecnologiasCategorias,
+      nivel_atividade: perfil.nivelAtividade || null,
+      recebimentos_governo: perfil.recebimentosGoverno || null,
+      grupo_economico: grupoEconomico,
+      filiais,
+
+      origem_dados: fatCnpj.origem || headcount.origem || null,
+      fonte_econodata: true,
     }
   }
 }

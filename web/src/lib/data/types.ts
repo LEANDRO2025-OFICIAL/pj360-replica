@@ -12,10 +12,23 @@ export type EntradaConfirmada = {
   colaboradoresClt: number
   passivoTributarioCents: string
   // Enriquecimento Econodata (opcional, sobrescreve os valores digitados quando disponível)
-  faturamentoEconomicoCents?: string | null      // faturamento estimado do Econodata
+  faturamentoEconomicoCents?: string | null      // faturamento estimado do Econodata (centavos)
   colaboradoresEconomicos?: number | null        // nº de funcionários do Econodata
   regimeTributarioEconomico?: Regime | null      // regime do Econodata
   fonteEconomica?: boolean                       // true se os dados vieram do Econodata
+  // Campos extras de enriquecimento (apenas leitura, exibidos na tela)
+  telefonesEconomicos?: Array<{
+    numero: string
+    tipo: string
+    assertividade: string
+    verificado: boolean
+    temWhatsapp: boolean
+  }>
+  emailReceitaEconomico?: string | null
+  siteEconomico?: string | null
+  sociosEconomicos?: Array<{ nome: string; qualificacao: string | null; documento: string | null }>
+  decisoresEconomicos?: Array<{ nome: string; cargo: string | null; email: string | null }>
+  tecnologiasEconomicas?: Array<{ nome: string; categoria: string }>
 }
 
 export type Oportunidade = {
